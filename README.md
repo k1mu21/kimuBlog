@@ -1,0 +1,2 @@
+# kimuBlog
+zennのブログ用
