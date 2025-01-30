@@ -1,3 +1,12 @@
+---
+title: "Cloudflare Pages FunctionsのログをCloudWatchに送る方法" # 記事のタイトル
+emoji: "😎" # アイキャッチとして使われる絵文字（1文字だけ）
+type: "tech" # tech: 技術記事 / idea: アイデア記事
+topics: ["Cloudflare","AWS",TS] # タグ。["markdown", "rust", "aws"]のように指定する
+published: false # 公開設定（falseにすると下書き）
+---
+ここから本文を書く
+
 ## はじめに
 
 どうもk1mu21です
