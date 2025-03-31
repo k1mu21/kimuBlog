@@ -2,7 +2,7 @@
 title: "ライブラリの更新が止まっていることを検知させるために取ったアプローチ" # 記事のタイトル
 emoji: "☺️" # アイキャッチとして使われる絵文字（1文字だけ）
 type: "idea" # tech: 技術記事 / idea: アイデア記事
-topics: ["gralde","GitLab"] # タグ。["markdown", "rust", "aws"]のように指定する
+topics: ["gralde","GitLab",Git] # タグ。["markdown", "rust", "aws"]のように指定する
 published: false # 公開設定（falseにすると下書き）
 ---
 ここから本文を書く
@@ -50,7 +50,7 @@ librariesはSonerCloudなどを提供しているTIDELIFT社のサービスに�
 librariesのAPIドキュメントを見るとGETで以下の形式のURLを叩くとそのライブラリの状況が取得できるということが調査でわかりました
 
 ```
-https://libraries.io/api/プラットフォーム名/パッケージ名?api_key=API_KEY
+https://libraries.io/api/プラットフォーム名/ライブラリ名/dependencies?api_key=API_KEY
 ```
 
 https://libraries.io/api
@@ -59,7 +59,7 @@ https://libraries.io/api
 
 1. リポジトリの使っているライブラリをどうにかして取得する
 2. 取得したライブラリ情報をもとにlibrariesのAPIを叩き、ライブラリの情報を取得する
-3. CIを回して対象ライブラリが最終更新からxヶ月立ってれば更新止まっていないか確認しろよー的な感じでIssueを作る
+3. CIを回して自動で対象ライブラリが最終更新からxヶ月立ってれば更新止まっていないか確認しろよー的な感じでIssueを作る
 
 
 ## 早速実装に取り掛かる
@@ -70,4 +70,73 @@ https://libraries.io/api
 
 今回はgradleを使っているので利用しているライブラリを吐き出せるコマンドがあり、その出力結果をtxtファイルに出力して１は達成できました
 
+```sh
+./gradlew dependencies --configuration runtimeClasspath
 ```
+
+手に入れたtxtファイルからwhileを使い、すべてのライブラリ情報をlibrariesから取得して最終更新日から１年立ってればそのライブラリを調べて欲しい旨のIsuueを作るシェルスクリプトを作成して２も達成
+
+```sh
+#!/bin/bash
+
+# 依存ライブラリリストからライブラリ名とバージョンを抽出
+grep '^\+---' test.txt | while read line; do
+  PACKAGE_LINE=$(echo $line | grep -oP '(?<=--- ).*')  # パッケージ名とバージョンの部分を抽出
+  PACKAGE_NAME=$(echo $PACKAGE_LINE | cut -d':' -f1,2)  # パッケージ名を抽出
+
+  # Libraries.io API を使用してライブラリ情報取得
+  RESPONSE=$(curl -s "https://libraries.io/api/maven/$PACKAGE_NAME/dependencies?api_key=$LIBRARIES_API_KEY")
+  EOL_DATE=$(echo $RESPONSE | grep -o '"latest_release_published_at":"[^"]*"' | sed 's/"latest_release_published_at":"\([^"]*\)"/\1/')
+
+  if [ "$EOL_DATE" != "" ]; then
+    # 現在の日付を取得
+    CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    # 1年前の日付を取得
+    ONE_YEAR_AGO=$(date -u -d "$CURRENT_DATE - 1 year" +"%Y-%m-%dT%H:%M:%SZ")
+
+    # 日付を比較して1年以上前の場合に絞り込む
+    if [[ "$EOL_DATE" < "$ONE_YEAR_AGO" ]]; then
+        # GitLab Issue を作成する処理
+        curl --request POST --header "PRIVATE-TOKEN: $CREATE_ISSUE_TOKEN" \
+        --data "title=このライブラリは最終リリース日から1年経っているので確認してください: $PACKAGE_NAME" \
+        "https://gitlabのドメイン名/api/v4/projects/プロジェクトID/issues"
+      fi
+    fi
+  fi
+done
+```
+
+```message
+APIキーはgitlab上で保存してCIで呼び出せるようにしています
+```
+
+Shadule機能で毎月１回CIを回してをスクリプトを実行するようにして完了！
+
+```yaml
+check_eol:
+  image: gradle:jdk21
+  stage: check_eol
+  before_script: []
+  after_script: []
+  script:
+    
+./gradlew dependencies --configuration runtimeClasspath > test.txt
+chmod +x ./test.sh
+./test.sh
+only:
+  refs:
+schedules
+tags:
+docker
+```
+
+これでissueが作成されるようになったので、少なくても長期間放置されるということが少しでも抑えることができるようになりました！
+
+##　まとめ
+
+- 変にツールを導入するよりも自分で実装すればコストも下がる+自分の実力も上がるでいい点も多いなと思いました
+    - 変に依存していると抜け出すのも大変になりますからね
+
+- EOLを検知するツールは思っていたよりも充実していない感じがしていたので、OSSでかつもっと導入が簡単なものが使えれば注目されそうーって思います
+
+- 最近ライブラリ更新とかやってるのでライブラリ更新おじさんになってきてる気がする...
