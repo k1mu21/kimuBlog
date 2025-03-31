@@ -50,7 +50,7 @@ https://github.com/xeol-io/xeol
 
 https://libraries.io/
 
-:::massage
+:::message
 librariesはSonerCloudなどを提供しているTIDELIFT社のサービスになります
 :::
 
@@ -68,10 +68,11 @@ https://libraries.io/api
 2. 取得したライブラリ情報をもとにlibrariesのAPIを叩き、ライブラリの情報を取得する
 3. CIを回して自動で対象ライブラリが最終更新からxヶ月立ってれば更新止まっていないか確認しろよー的な感じでIssueを作る
 
+![簡単なシステム構成図](https://storage.googleapis.com/zenn-user-upload/c1997bca8453-20250401.png)
 
 ## 早速実装に取り掛かる
 
-:::massage
+:::message
 今後の例はJava+Gradle+GitLab-ciをメインに進めていきます
 :::
 
@@ -141,7 +142,7 @@ docker
 
 ![eolっぽいもの](https://storage.googleapis.com/zenn-user-upload/ffa24002f00b-20250401.png)
 
-##　まとめ
+## まとめ
 
 - 変にツールを導入するよりも自分で実装すればコストも下がる+自分の実力も上がるでいい点も多いなと思いました
     - 変に依存していると抜け出すのも大変になりますからね
