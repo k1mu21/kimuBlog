@@ -10,14 +10,14 @@ published: false # 公開設定（falseにすると下書き）
 
 どうもk1mu21です!
 
-テスト時にある環境が必要ですが、タイミングによっては落ちてしまっているのでテストが必ず失敗してしまうといったことはありがちではないでしょうか？
-そのためシステムの返り値をモック化してテストをしているといった状況になりがちかと思います
+テスト時にある環境が必要ですが、タイミング悪く落ちてしまってテストが必ず失敗してしまうといったことはありがちではないでしょうか？
+そのためシステムの返り値をモック化してテストコードを書くような状況になりがちかと思います
 
-また、AIagentがViveCordingをする時代にもなってさらにテストの重要度が上がっているので変更に強いテストを作成する必要があります
+また昨今、AI AgentがViveCordingをする時代にもなってさらにテストの重要度が上がっているので変更に強いテストを作成する必要があります
 
 今回はそんな状況に対してTestcontainersを利用してテスト環境をある程度改善する方法をご紹介したいと思います
 
-## TestContainersとは？
+## Testcontainersとは？
 
 Testcontainersは、Dockerコンテナで動作する軽量なインスタンスを提供するオープンソースライブラリになります
 
@@ -27,14 +27,14 @@ https://testcontainers.com/?language=java
 
 https://testcontainers.com/modules/?language=go
 
-コンテナ化されていなくてもモジュール化されていれば利用できる場合があります
+コンテナ化されていない場合でも、Testcontainersが提供する各種モジュール（データベースなど）を利用して、依存するサービスをコンテナとして立ち上げることが可能です
 
 ## 使い方
 
 - Goを利用した場合の例になります
 - ElasticSearchのコンテナを利用
 
-```Go:ElasticSearch_Test.go
+```Go:elasticsearch_test.go
 ...
 
 func TestInitCreateElasticsearch(t testing.T) {
@@ -54,7 +54,7 @@ func TestInitCreateElasticsearch(t testing.T) {
             wait.ForHTTP("/"). 
                         WithPort("9200/tcp").
                         WithStatusCodeMatcher(func(code int) bool { return code == http.StatusOK }).
-                        WithStartupTimeout(2time.Minute),
+                        WithStartupTimeout(2 * time.Minute),
         ),
     )
     if err != nil {
@@ -100,7 +100,7 @@ https://testcontainers.com/modules/elasticsearch/?language=go
 
 - システムが落ちている場合を考慮した設計にしなくても良くなるためモックが減らせます
     - 実際の返り値等でテストで使えるようになるのが利点です
-    - モックが減るのでAIagent等のコード修正に強いテストになると思います
+    - モックが減るのでAI Agent等のコード修正に強いテストになると思います
 
 ## デメリット
 
@@ -132,7 +132,7 @@ Runnerを動かし続けるのは利用料金が増えるのでタイムアウ�
 ### 結局はテスト環境
 
 - 結局はテスト環境内で立てている環境であるため、本番環境とは差異がある
-    - DBとかだとストレージ設定やIPOS、メモリ量など...
+    - DBとかだとストレージ設定やIOPS、メモリ量など...
     - どこまでTestcontainersで担保するのかを考えてテストをする必要があります
 
 ### まとめ
