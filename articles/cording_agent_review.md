@@ -109,5 +109,57 @@ func main() {
 
 [↑のコードのGoPlayground](https://go.dev/play/p/8uJkUvJk-sQ)
 
+ですが、このコード自体はプロダクトへのクリティカルな問題ではないので、リリース時期が迫っているなどの理由があれば許容するのも一つの手かと思います
 :::
 
+### Q3　在庫関連Repositoyクラスの追加
+
+状況によって使うコードも変わる場合もあると思うのであえてJavaのコードにしてみます
+
+```java
+@Data
+public class Stock {
+
+    @ID
+    private int stockID;
+
+    private int productID;
+
+    private int stock;
+}
+```
+
+```java
+@Repository
+public interface StockRepository extends JpaRepository<Stock, Integer> {
+
+    @Query("SELECT s " 
+        + "FROM Stock s " 
+        + "WHERE " + "s.productID = :productID")
+    Optional<Stock> findByProductID(@Param("productID") int productID);
+}
+
+```
+
+:::details 回答
+＠Queryの文字列結合がエグいと思いますが、Java17から[TextBlock](https://docs.oracle.com/javase/jp/14/docs/specs/text-blocks-jls.html)機能が追加されたので複数文字列を表現することができます！
+
+```java
+@Query("SELECT s 
+        FROM Stock s 
+        WHERE s.productID = :productID")
+Optional<Stock> findByProductID(@Param("productID") int productID);
+```
+
+他にはJPAを使っているので@Queryを使う必要もなく...
+
+```java
+Optional<Stock> findByProductID(int productID);
+```
+
+あと後のことを考えるとEntityがFatModelになることも考慮して、[ProjectionsInterfaces](https://spring.pleiades.io/spring-data/jpa/reference/repositories/projections.html#projections.interfaces)で結果を返すようにすることもできます！
+
+どうでしたか？JavaやSpring Flameworkの機能を知っていないとどう改善できるのかの判断が難しいと思います
+:::
+
+### Q4
