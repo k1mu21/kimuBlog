@@ -2,7 +2,7 @@
 title: "AIを使う際、コードを適用する前に意識して欲しいこと" # 記事のタイトル
 emoji: "🧐" # アイキャッチとして使われる絵文字（1文字だけ）
 type: "idea" # tech: 技術記事 / idea: アイデア記事
-topics: [AI,Agent,GitHub Copilot, Claude Code, Go] # タグ。["markdown", "rust", "aws"]のように指定する
+topics: [AI,Agent,GitHubCopilot, ClaudeCode, Go] # タグ。["markdown", "rust", "aws"]のように指定する
 published: false # 公開設定（falseにすると下書き）
 ---
 
@@ -22,7 +22,6 @@ https://speakerdeck.com/bitkey/enabling-adaptable-ai-through-strategic-architect
 この部分に特に共感を持ちました
 
 皆さんはAIに対してはどういったスタンスで向き合っていますか。
-
 とりあえず成果優先で物を完成させることを優先していますか？
 AIは信頼できないものと捉えて常に疑いを向けて利用していますか？
 
@@ -30,12 +29,10 @@ AIは信頼できないものと捉えて常に疑いを向けて利用してい
 
 ## 皆さんなら以下のコードをAIが出力してきた場合Acceptしますか？
 
-早速ですが質問です。
-上記で記載しているように皆さんは以下のコードをAIが出力してきたらどうしますか?
-
+早速ですが質問です。上記で記載しているように皆さんは以下のコードをAIが出力してきたらどうしますか?
 AcceptするかRejectするかの基準で判断してみてください！
 
-:::massage
+:::message
 回答は自分なりの考えであって、必ずしも正解ではないこと留意していただきたいです
 :::
 
