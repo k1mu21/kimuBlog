@@ -32,7 +32,7 @@ https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/
 
 次に、GitHubリポジトリのルートにある`.github/workflows`ディレクトリに新しいYAMLファイルを作成します
 
-デプロイにはwrangler-actionsを使用します
+デプロイにはwrangler-actionを使用します
 https://github.com/cloudflare/wrangler-action
 
 ```yaml:deploy.yaml
@@ -80,7 +80,7 @@ wranglerはブランチ名を指定すれば`https://<brahch-name>.プロジェ�
 また、preview環境のbranch-nameにはブランチ名が入りますが、最大28文字までしか入らずそれ以上の長さは自動で切り捨てられるという仕様もあります
 他にブランチの大文字は小文字に変換されるなどのルールもあるので、注意が必要です
 
-PR上からpreview環境にアクセスしたい場合は、ブランチ名を仕様に合わせたものをenvironment変数に設定しておくとview deploymentボタンから遷移できるので設定しておくと便利です
+PR上からpreview環境にアクセスしたい場合は、URLはCloudflare仕様に合わせたものをenvironment変数に設定しておくとview deploymentボタンから遷移できるので設定しておくと便利です
 
 #### 4.PRがcloseされたときにpreview環境を削除するワークフローの作成
 
@@ -132,6 +132,6 @@ https://community.cloudflare.com/t/how-to-delete-aliased-preview-deployments/269
 ## おわりに
 
 今回はCloudflare Pagesに対してGitHub Actionsを使って自動デプロイする方法について紹介しました
-wrangler-actionsを使うことで簡単にデプロイが可能になりますし、PRごとにpreview環境を立てることもできるので非常に便利です
+wrangler-actionを使うことで簡単にデプロイが可能になりますし、PRごとにpreview環境を立てることもできるので非常に便利です
 個人開発でCloudflare Pagesを利用している方は多いと思うので、ぜひ試してみてください
 また、静的サイトレベルなら業務利用でも十分Cloudflare Pagesは使えると思うので、興味がある方は検討してみてはいかがでしょうか
