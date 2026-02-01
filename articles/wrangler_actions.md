@@ -11,7 +11,7 @@ published: false # 公開設定（falseにすると下書き）
 今回はCloudflare Pagesに対してGitHub Actionsを使って自動デプロイを行う方法について紹介します。
 最近GitLab CI/CDを利用してCloudflare pagesにデプロイをしていましたが、Github Actionsに移行してより簡単にCloudflare Pagesにデプロイできるようになったので、方法を共有したいと思いました。
 
-個人開発ではCloudflareは無料枠が充実してるので利用している方は多いと思うので、wranlerを使って自動デプロイする方法を知っておくと便利かと思います。
+個人開発ではCloudflareは無料枠が充実してるので利用している方は多いと思うので、wranglerを使って自動デプロイする方法を知っておくと便利かと思います。
 
 ## 手順
 ### 1. Cloudflare APIトークンの作成
@@ -47,28 +47,31 @@ deploy:
     steps:
         - uses: actions/checkout@v6
         - name: Generate short slug
-            id: slug
-            run: echo "short_slug=$(echo ${GITHUB_REF#refs/heads/} | tr '[:upper:]' '[:lower:]' | cut -c1-28 | tr '/' '-')" >> $GITHUB_OUTPUTS
+          id: slug
+          run: |
+            BRANCH_NAME=${{github.head_ref }}
+            SHORT_SLUG=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | cut -c1-28 | tr '/' '-')
+            echo "short_slug=$SHORT_SLUG" >> $GITHUB_OUTPUT
         # Build stepから成果物を受け取る想定
         - name: Download Artifacts
             uses: actions/download-artifact@v7
             with:
-            name: dist
-            path: ./dist
+              name: dist
+              path: ./dist
         - name: Build & Deploy (production)
             if: github.ref_name == 'refs/heads/main'
             uses: cloudflare/wrangler-action@v3
             with:
-            apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-            accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-            command: pages deploy --project-name=<project-name>
+              apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+              accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+              command: pages deploy --project-name=<project-name>
         - name: Build & Deploy (preview)
             if: github.ref_name != 'refs/heads/main'
             uses: cloudflare/wrangler-action@v3
             with:
-            apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-            accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-            command: pages deploy --project-name=<project-name> --branch=${{ github.head_ref }}
+              apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+              accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+              command: pages deploy --project-name=<project-name> --branch=${{ github.head_ref }}
 ...
 ```
 
@@ -103,11 +106,12 @@ jobs:
                 AccountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
               run: |
                 # 生成されたブランチ名を取得
-                BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr '[:upper:]' '[:lower:]' | cut -c1-28 | tr '/' '-')
+                BRANCH_NAME=${{github.head_ref }}
+                SHORT_SLUG=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | cut -c1-28 | tr '/' '-')
                 # 対象ブランチのID取得
                 DEPLOYMENTS_ID=$(curl --silent --request GET "https://api.cloudflare.com/client/v4/accounts/$AccountID/pages/projects/$PROJECT_NAME/deployments" \
                   --header "Authorization: Bearer $ApiToken" \
-                  --header "Content-Type: application/json" | jq -r ".result[] | select(.deployment_trigger.metadata.branch==\"$BRANCH_NAME\") | .id")
+                  --header "Content-Type: application/json" | jq -r ".result[] | select(.deployment_trigger.metadata.branch==\"$SHORT_SLUG\") | .id")
                 # デプロイ削除
                 curl --request DELETE "https://api.cloudflare.com/client/v4/accounts/$AccountID/pages/projects/$PROJECT_NAME/deployments/$DEPLOYMENTS_ID?force=true" \
                   --header "Authorization: Bearer $ApiToken" \
