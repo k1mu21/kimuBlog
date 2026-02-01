@@ -1,6 +1,6 @@
 ---
 title: "wrangler-actionsを使ってCloudflare Pagesを自動デプロイする" # 記事のタイトル
-emoji: "🧐" # アイキャッチとして使われる絵文字（1文字だけ）
+emoji: "😘" # アイキャッチとして使われる絵文字（1文字だけ）
 type: "tech" # tech: 技術記事 / idea: アイデア記事
 topics: [Cloudflare,Cloudflare Pages,wrangler,GitHubActions] # タグ。["markdown", "rust", "aws"]のように指定する
 published: false # 公開設定（falseにすると下書き）
@@ -117,6 +117,8 @@ jobs:
 
 実は、Cloudflare PagesはPRがMergeされてbranchが削除されたとしても、Preview環境に同期されているわけではないので削除されません
 Cloudflareのコンソール上から削除を行うこともできますが、見た目から消えてるだけで実はPreview URLを直指定することでアクセスが可能になっています
+
+https://developers.cloudflare.com/api/resources/pages/
 
 参考になるissue
 https://community.cloudflare.com/t/how-to-delete-aliased-preview-deployments/269292/25
