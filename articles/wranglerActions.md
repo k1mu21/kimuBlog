@@ -36,22 +36,83 @@ https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/
 https://github.com/cloudflare/wrangler-action
 
 ```yaml:deploy.yaml
-jobs:
-    
+...
+deploy:
+    name: Deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+    needs: build
+    environment: 
+        name: ${{ github.ref_name == 'refs/heads/main' && 'production' || 'preview' }}
+        url: ${{ github.ref_name == 'refs/heads/main' && '<your_domain>' || format('https://{0}.{1}.pages.dev', steps.slug.outputs.short_slug, '<project-name>') }}
+    steps:
+        - uses: actions/checkout@v6
+        - name: Generate short slug
+            id: slug
+            run: echo "short_slug=$(echo ${GITHUB_REF#refs/heads/} | tr '[:upper:]' '[:lower:]' | cut -c1-28 | tr '/' '-')" >> $GITHUB_OUTPUTS
+        # Build stepから成果物を受け取る想定
+        - name: Download Artifacts
+            uses: actions/download-artifact@v7
+            with:
+            name: dist
+            path: ./dist
+        - name: Build & Deploy (production)
+            if: github.ref_name == 'refs/heads/main'
+            uses: cloudflare/wrangler-action@v3
+            with:
+            apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+            accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+            command: pages deploy --project-name=<project-name>
+        - name: Build & Deploy (preview)
+            if: github.ref_name != 'refs/heads/main'
+            uses: cloudflare/wrangler-action@v3
+            with:
+            apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+            accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+            command: pages deploy --project-name=<project-name> --branch=${{ github.head_ref }}
+...
 ```
 
 wranglerはブランチ名を指定すれば`https://<brahch-name>.プロジェクト名.pages.dev/`のようにデプロイされるので、mainにmergeされたら本番環境、それ以外だとpreview環境にデプロイするようにActionsを設定することができます
 
-また、preview環境のbranch-nameにはブランチ名が入りますが、最大26文字までしか入らずそれ以上の長さは自動で切り捨てられるという仕様もあります
+また、preview環境のbranch-nameにはブランチ名が入りますが、最大28文字までしか入らずそれ以上の長さは自動で切り捨てられるという仕様もあります
 他にブランチの大文字は小文字に変換されるなどのルールもあるので、注意が必要です
 
-PR上からpreview環境にアクセスしたい場合は、ブランチ名を使用に合わせたものをenvironment変数に設定しておくとview deploymentボタンから遷移する際に便利です
+PR上からpreview環境にアクセスしたい場合は、ブランチ名を仕様に合わせたものをenvironment変数に設定しておくとview deploymentボタンから遷移できるので設定しておくと便利です
 
 #### 4.PRがcloseされたときにpreview環境を削除するワークフローの作成
 
 PRがcloseされたときなどにpreview環境を削除するワークフローも作成しておいた方が安全です。
 
 ```yaml:delete-preview.yaml
+...
+on:
+  pull_request:
+    types: [closed]
+env:
+  PROJECT_NAME: <project-name>
+
+jobs:
+    delete-preview:
+        name: Delete Cloudflare Pages Preview Deployment
+        runs-on: ubuntu-latest
+        steps:
+            - name: Delete Preview Deployment
+              uses: cloudflare/wrangler-action@v3
+              with:
+                ApiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                AccountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+              run: |
+                # 生成されたブランチ名を取得
+                BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr '[:upper:]' '[:lower:]' | cut -c1-28 | tr '/' '-')
+                # 対象ブランチのID取得
+                DEPLOYMENTS_ID=$(curl --silent --request GET "https://api.cloudflare.com/client/v4/accounts/$AccountID/pages/projects/$PROJECT_NAME/deployments" \
+                  --header "Authorization: Bearer $ApiToken" \
+                  --header "Content-Type: application/json" | jq -r ".result[] | select(.deployment_trigger.metadata.branch==\"$BRANCH_NAME\") | .id")
+                # デプロイ削除
+                curl --request DELETE "https://api.cloudflare.com/client/v4/accounts/$AccountID/pages/projects/$PROJECT_NAME/deployments/$DEPLOYMENTS_ID?force=true" \
+                  --header "Authorization: Bearer $ApiToken" \
+                  --header "Content-Type: application/json"
+
 ```
 
 実は、Cloudflare PagesはPRがMergeされてbranchが削除されたとしても、Preview環境に同期されているわけではないので削除されません
@@ -68,4 +129,3 @@ https://community.cloudflare.com/t/how-to-delete-aliased-preview-deployments/269
 wrangler-actionsを使うことで簡単にデプロイが可能になりますし、PRごとにpreview環境を立てることもできるので非常に便利です
 個人開発でCloudflare Pagesを利用している方は多いと思うので、ぜひ試してみてください
 また、静的サイトレベルなら業務利用でも十分Cloudflare Pagesは使えると思うので、興味がある方は検討してみてはいかがでしょうか
-(弊社は業務利用でCloudflare Pagesを使っています！)
